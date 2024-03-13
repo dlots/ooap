@@ -1,22 +1,22 @@
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PushStatus {
-    NIL,    // never called push()
-    OK,     // last push() call was successful
-    ERROR   // last push() called on empty stack
+    Nil,    // never called push()
+    Ok,     // last push() call was successful
+    Error   // last push() called on empty stack
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PopStatus {
-    NIL,    // never called pop()
-    OK,     // last pop() call was successful
-    ERROR   // last pop() called on empty stack
+    Nil,    // never called pop()
+    Ok,     // last pop() call was successful
+    Error   // last pop() called on empty stack
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum PeekStatus {
-    NIL,    // never called peek()
-    OK,     // last peek() call returned correct value
-    ERROR   // last peek() called on empty stack
+    Nil,    // never called peek()
+    Ok,     // last peek() call returned correct value
+    Error   // last peek() called on empty stack
 }
 
 const DEFAULT_UPPER_BOUND: usize = 32;
@@ -79,44 +79,44 @@ impl <T: Copy> BoundedStack<T> for BoundedStackImpl<T> {
         BoundedStackImpl {
             stack: Vec::new(),
             const_upper_bound: upper_bound,
-            push_status: PushStatus::NIL,
-            pop_status: PopStatus::NIL,
-            peek_status: PeekStatus::NIL
+            push_status: PushStatus::Nil,
+            pop_status: PopStatus::Nil,
+            peek_status: PeekStatus::Nil
         }
     }
 
     fn push(&mut self, value: T) {
         if self.size() >= self.const_upper_bound {
-            self.push_status = PushStatus::ERROR;
+            self.push_status = PushStatus::Error;
             return;
         }
         self.stack.push(value);
-        self.push_status = PushStatus::OK;
+        self.push_status = PushStatus::Ok;
     }
 
     fn pop(&mut self) {
         let size = self.size();
         if size <= 0 {
-            self.pop_status = PopStatus::ERROR;
+            self.pop_status = PopStatus::Error;
             return;
         }
         self.stack.pop();
-        self.pop_status = PopStatus::OK;
+        self.pop_status = PopStatus::Ok;
     }
 
     fn clear(&mut self) {
         self.stack = Vec::new();
-        self.push_status = PushStatus::NIL;
-        self.pop_status = PopStatus::NIL;
-        self.peek_status = PeekStatus::NIL;
+        self.push_status = PushStatus::Nil;
+        self.pop_status = PopStatus::Nil;
+        self.peek_status = PeekStatus::Nil;
     }
 
     fn peek(&mut self) -> Option<T> {
         if self.size() <= 0 {
-            self.peek_status = PeekStatus::ERROR;
+            self.peek_status = PeekStatus::Error;
             return None;
         }
-        self.peek_status = PeekStatus::OK;
+        self.peek_status = PeekStatus::Ok;
         Some(self.stack[self.size() - 1])
     }
 
@@ -143,9 +143,9 @@ mod test {
 
     fn assert_clear<T, U: BoundedStack<T>>(stack: &U) {
         assert_eq!(stack.size(), 0);
-        assert_eq!(stack.get_push_status(), PushStatus::NIL);
-        assert_eq!(stack.get_pop_status(), PopStatus::NIL);
-        assert_eq!(stack.get_peek_status(), PeekStatus::NIL);
+        assert_eq!(stack.get_push_status(), PushStatus::Nil);
+        assert_eq!(stack.get_pop_status(), PopStatus::Nil);
+        assert_eq!(stack.get_peek_status(), PeekStatus::Nil);
     }
 
     #[test]
@@ -169,31 +169,31 @@ mod test {
         for i in 1..=DEFAULT_UPPER_BOUND {
             let value = i as i64;
             stack.push(value);
-            assert_eq!(stack.get_push_status(), PushStatus::OK);
+            assert_eq!(stack.get_push_status(), PushStatus::Ok);
             assert_eq!(stack.size(), i);
             assert_eq!(stack.peek().unwrap(), value);
-            assert_eq!(stack.get_peek_status(), PeekStatus::OK);
+            assert_eq!(stack.get_peek_status(), PeekStatus::Ok);
         }
         stack.push(1);
-        assert_eq!(stack.get_push_status(), PushStatus::ERROR);
+        assert_eq!(stack.get_push_status(), PushStatus::Error);
         assert_eq!(stack.size(), DEFAULT_UPPER_BOUND);
         assert_eq!(stack.peek().unwrap(), DEFAULT_UPPER_BOUND as i64);
-        assert_eq!(stack.get_peek_status(), PeekStatus::OK);
+        assert_eq!(stack.get_peek_status(), PeekStatus::Ok);
         for i in (0..=DEFAULT_UPPER_BOUND - 1).rev() {
             let value = i as i64;
             stack.pop();
-            assert_eq!(stack.get_pop_status(), PopStatus::OK);
+            assert_eq!(stack.get_pop_status(), PopStatus::Ok);
             assert_eq!(stack.size(), i);
             if i == 0 {
                 break;
             }
             assert_eq!(stack.peek().unwrap(), value);
-            assert_eq!(stack.get_peek_status(), PeekStatus::OK);
+            assert_eq!(stack.get_peek_status(), PeekStatus::Ok);
         }
         stack.pop();
-        assert_eq!(stack.get_pop_status(), PopStatus::ERROR);
+        assert_eq!(stack.get_pop_status(), PopStatus::Error);
         assert_eq!(stack.size(), 0);
         assert_eq!(stack.peek(), None);
-        assert_eq!(stack.get_peek_status(), PeekStatus::ERROR);
+        assert_eq!(stack.get_peek_status(), PeekStatus::Error);
     }
 }
