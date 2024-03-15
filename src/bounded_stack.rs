@@ -50,7 +50,7 @@ pub trait BoundedStack<T> {
      * Queries
     **/
     // Pre-condition: the stack is not empty
-    fn peek(&mut self) -> Option<T>;
+    fn peek(&mut self) -> Option<&T>;
 
     fn size(&self) -> usize;
 
@@ -111,13 +111,13 @@ impl <T: Copy> BoundedStack<T> for BoundedStackImpl<T> {
         self.peek_status = PeekStatus::Nil;
     }
 
-    fn peek(&mut self) -> Option<T> {
+    fn peek(&mut self) -> Option<&T> {
         if self.size() <= 0 {
             self.peek_status = PeekStatus::Error;
             return None;
         }
         self.peek_status = PeekStatus::Ok;
-        Some(self.stack[self.size() - 1])
+        Some(&self.stack[self.size() - 1])
     }
 
     fn size(&self) -> usize {
@@ -171,13 +171,13 @@ mod test {
             stack.push(value);
             assert_eq!(stack.get_push_status(), PushStatus::Ok);
             assert_eq!(stack.size(), i);
-            assert_eq!(stack.peek().unwrap(), value);
+            assert_eq!(*stack.peek().unwrap(), value);
             assert_eq!(stack.get_peek_status(), PeekStatus::Ok);
         }
         stack.push(1);
         assert_eq!(stack.get_push_status(), PushStatus::Error);
         assert_eq!(stack.size(), DEFAULT_UPPER_BOUND);
-        assert_eq!(stack.peek().unwrap(), DEFAULT_UPPER_BOUND as i64);
+        assert_eq!(*stack.peek().unwrap(), DEFAULT_UPPER_BOUND as i64);
         assert_eq!(stack.get_peek_status(), PeekStatus::Ok);
         for i in (0..=DEFAULT_UPPER_BOUND - 1).rev() {
             let value = i as i64;
@@ -187,7 +187,7 @@ mod test {
             if i == 0 {
                 break;
             }
-            assert_eq!(stack.peek().unwrap(), value);
+            assert_eq!(*stack.peek().unwrap(), value);
             assert_eq!(stack.get_peek_status(), PeekStatus::Ok);
         }
         stack.pop();
