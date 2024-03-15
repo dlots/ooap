@@ -1,9 +1,37 @@
 #[derive(Debug, Copy, Clone, PartialEq)]
+pub enum HeadStatus {
+    Nil,    // never called head()
+    Ok,     // last head() call was successful
+    Empty,  // last head() called on empty list
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum TailStatus {
+    Nil,    // never called tail()
+    Ok,     // last tail() call was successful
+    Empty,  // last tail() called on empty list
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum RightStatus {
     Nil,    // never called right()
     Ok,     // last right() call was successful
     Empty,  // last right() called on empty list
     NoNext  // last right() called when current node had no right neighbor
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum PutLeftStatus {
+    Nil,    // never called put_left()
+    Ok,     // last put_left() call was successful
+    Empty,  // last put_left() called on empty list
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum PutRightStatus {
+    Nil,    // never called put_right()
+    Ok,     // last put_right() call was successful
+    Empty,  // last put_right() called on empty list
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -27,6 +55,14 @@ pub enum GetStatus {
     Empty,  // last get() called on empty list
 }
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum FindStatus {
+    Nil,      // never called find()
+    Ok,       // last find() call was successful
+    Empty,    // last find() called on empty list
+    NotFound  // last find() did not found a value
+}
+
 // Definition of Abstract Data Type "LinkedList"
 pub trait LinkedList<T> {
     /**
@@ -38,9 +74,11 @@ pub trait LinkedList<T> {
     /**
      * Commands
     **/
+    // Pre-condition: the list is not empty
     // Post-condition: the cursor points to the head of the list if exists
     fn head(&mut self);
 
+    // Pre-condition: the list is not empty
     // Post-condition: the cursor points to the tail of the list if exists
     fn tail(&mut self);
 
@@ -48,13 +86,15 @@ pub trait LinkedList<T> {
     // Post-condition: the cursor points to the next node
     fn right(&mut self);
 
-    // Post-condition: a new node is inserted after the current node
-    // If the list was empty, the cursor points to the new node
-    fn put_right(&mut self, value: T);
-
+    // Pre-condition: the list is not empty
     // Post-condition: a new node is inserted after the current node
     // If the list was empty, the cursor points to the new node
     fn put_left(&mut self, value: T);
+
+    // Pre-condition: the list is not empty
+    // Post-condition: a new node is inserted after the current node
+    // If the list was empty, the cursor points to the new node
+    fn put_right(&mut self, value: T);
 
     // Pre-condition: the list is not empty
     // Post-condition: current node is deleted, the cursor points to the next
@@ -96,10 +136,15 @@ pub trait LinkedList<T> {
     /**
      * Status queries
     **/
+    fn get_head_status(&self) -> HeadStatus;
+    fn get_tail_status(&self) -> TailStatus;
     fn get_right_status(&self) -> RightStatus;
+    fn get_put_left_status(&self) -> PutLeftStatus;
+    fn get_put_right_status(&self) -> PutRightStatus;
     fn get_remove_status(&self) -> RemoveStatus;
     fn get_replace_status(&self) -> ReplaceStatus;
     fn get_get_status(&self) -> GetStatus;
+    fn get_find_status(&self) -> FindStatus;
 }
 
 // 2.2. Операция tail не сводима к другим операциям с точки зрения эффективной реализации,
