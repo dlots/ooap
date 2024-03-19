@@ -160,14 +160,16 @@ pub trait ParentList<T> {
 /**
  * Definition of Abstract Data Type "LinkedList"
 **/
-trait LinkedList<T>: ParentList<T> {
-    // No new methods
+pub trait LinkedList<T>: ParentList<T> {
+    fn new() -> Self;
 }
 
 /**
  * Definition of Abstract Data Type "TwoWayList"
 **/
-trait TwoWayList<T> : ParentList<T> {
+pub trait TwoWayList<T> : ParentList<T> {
+    fn new() -> Self;
+
     // Pre-condition: the list is not empty and the previous node exists
     // Post-condition: the cursor points to the previous node
     fn left(&mut self);
@@ -183,7 +185,7 @@ struct ListNode<T> {
     previous: Option<Weak<RefCell<ListNode<T>>>>
 }
 
-struct ParentListImpl<T> {
+pub struct ParentListImpl<T> {
     head: Option<Rc<RefCell<ListNode<T>>>>,
     tail: Option<Weak<RefCell<ListNode<T>>>>,
     cursor: Option<Weak<RefCell<ListNode<T>>>>,
@@ -375,18 +377,20 @@ impl<T> ParentList<T> for ParentListImpl<T> {
             next: None,
             previous: None
         }));
+        let new_weak = Rc::downgrade(&new_value);
 
         if self.size == 1 {
-            self.head = Some(new_value.clone());
+            self.head = Some(new_value);
+            self.cursor = Some(new_weak.clone());
         } else {
             let Some(tail_rc) = self.tail.clone().and_then(|weak| weak.upgrade()) else {
                 panic!("add_tail(): size > 1 but tail is None");
             };
             new_value.borrow_mut().previous = self.tail.clone();
-            tail_rc.borrow_mut().next = Some(new_value.clone());
+            tail_rc.borrow_mut().next = Some(new_value);
         }
 
-        self.tail = Some(Rc::downgrade(&new_value));
+        self.tail = Some(new_weak);
     }
 
     fn replace(&mut self, value: T) {
@@ -492,7 +496,7 @@ impl<T> ParentList<T> for ParentListImpl<T> {
     }
 
     fn is_value(&self) -> bool {
-        self.size == 0
+        self.size != 0
     }
 
     fn get_head_status(&self) -> HeadStatus {
@@ -532,12 +536,14 @@ impl<T> ParentList<T> for ParentListImpl<T> {
     }
 }
 
-struct LinkedListImpl<T> {
+pub struct LinkedListImpl<T> {
     delegate_list: ParentListImpl<T>
 }
 
 impl<T> LinkedList<T> for LinkedListImpl<T> {
-    // No new methods
+    fn new() -> Self {
+        ParentList::<T>::new()
+    }
 }
 
 impl<T> ParentList<T> for LinkedListImpl<T> {
@@ -648,12 +654,16 @@ impl<T> ParentList<T> for LinkedListImpl<T> {
     }
 }
 
-struct DoublyLinkedListImpl<T> {
+pub struct TwoWayListImpl<T> {
     delegate_list: ParentListImpl<T>,
     left_status: LeftStatus
 }
 
-impl<T> TwoWayList<T> for DoublyLinkedListImpl<T> {
+impl<T> TwoWayList<T> for TwoWayListImpl<T> {
+    fn new() -> Self {
+        ParentList::<T>::new()
+    }
+
     fn left(&mut self) {
         let delegate = &mut self.delegate_list;
 
@@ -680,9 +690,9 @@ impl<T> TwoWayList<T> for DoublyLinkedListImpl<T> {
     }
 }
 
-impl<T> ParentList<T> for DoublyLinkedListImpl<T> {
+impl<T> ParentList<T> for TwoWayListImpl<T> {
     fn new() -> Self {
-        DoublyLinkedListImpl {
+        TwoWayListImpl {
             delegate_list: ParentListImpl::<T>::new(),
             left_status: LeftStatus::Nil
         }
@@ -787,4 +797,53 @@ impl<T> ParentList<T> for DoublyLinkedListImpl<T> {
     fn get_find_status(&self) -> FindStatus {
         self.delegate_list.get_find_status()
     }
+}
+
+#[cfg(test)]
+mod test {
+    use std::ops::Range;
+    use crate::list_hierarchy::*;
+
+    fn assert_clear<T>(list: &ParentListImpl<T>) {
+        assert_eq!(list.size(), 0);
+        assert!(list.head.is_none());
+        assert!(list.tail.is_none());
+        assert!(list.cursor.is_none());
+        assert_eq!(list.head_status, HeadStatus::Nil);
+        assert_eq!(list.tail_status, TailStatus::Nil);
+        assert_eq!(list.right_status, RightStatus::Nil);
+        assert_eq!(list.put_left_status, PutLeftStatus::Nil);
+        assert_eq!(list.put_right_status, PutRightStatus::Nil);
+        assert_eq!(list.remove_status, RemoveStatus::Nil);
+        assert_eq!(list.replace_status, ReplaceStatus::Nil);
+        assert_eq!(list.get_status, GetStatus::Nil);
+        assert_eq!(list.find_status, FindStatus::Nil);
+    }
+
+    fn create_sample_list<U: ParentList<i64>>(range: Range<i64>) -> U {
+        let mut list: U = ParentList::<i64>::new();
+        for i in range {
+            list.add_tail(i);
+        }
+        list
+    }
+
+    #[test]
+    fn test_new() {
+        let list: LinkedListImpl<i64> = ParentList::<i64>::new();
+        assert_clear(&list.delegate_list);
+
+        let two_way_list: TwoWayListImpl<i64> = ParentList::<i64>::new();
+        assert_clear(&two_way_list.delegate_list);
+    }
+
+    #[test]
+    fn test_basic() {
+        let list = create_sample_list::<LinkedListImpl<i64>>(0..3);
+        assert_eq!(list.size(), 3);
+        assert!(list.is_head());
+        assert!(!list.is_tail());
+        assert!(list.is_value());
+    }
+
 }
