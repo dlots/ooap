@@ -1,8 +1,8 @@
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum DequeueStatus {
-    Nil,    // never called enqueue()
-    Ok,     // last enqueue() call was successful
-    Empty,  // last enqueue() called on empty queue
+    Nil,    // never called dequeue()
+    Ok,     // last dequeue() call was successful
+    Empty,  // last dequeue() called on empty queue
 }
 
 // ====== Definition of abstract data type "Queue" ======
@@ -72,23 +72,6 @@ impl<T> Queue<T> for QueueImpl<T> {
 #[cfg(test)]
 mod test {
     use crate::queue::*;
-
-    // def test_enqueue(self):
-    //     queues = [Queue(), StackBasedQueue()]
-    //     for queue in queues:
-    //     for i in range(1, 101):
-    //     queue.enqueue(i)
-    //     self.assertEqual(queue.size(), i)
-    //     self.assertEqual(queue.dequeue(), 1)
-    //
-    // def test_dequeue(self):
-    //     queues = [Queue(), StackBasedQueue()]
-    //     for queue in queues:
-    //     self.assertIsNone(queue.dequeue())
-    //     for i in range(1, 101):
-    //     queue.enqueue(i)
-    //     for i in range(1, 101):
-    //     self.assertEqual(queue.dequeue(), i)
 
     #[test]
     fn test_queue() {
