@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-import dynamic_array as da
 
 
 class SeekStatus(Enum):
@@ -14,7 +13,8 @@ class PutStatus(Enum):
     Nil = 0
     Ok = 1
     IsNone = 2,
-    Fail = 3
+    Full = 3,
+    Fail = 4
 
 
 class RemoveStatus(Enum):
@@ -25,24 +25,32 @@ class RemoveStatus(Enum):
 
 
 # Definition of the abstract data type
+# Supports storing several equal values, all copies occupy one capacity slot
 class AbstractHashTable(ABC):
     @abstractmethod
-    # Post-condition: a new hash table instance with default capacity is created
+    # Post-condition: a new hash table that can store 'capacity' unique values is created
     def __init__(self, capacity):
         pass
 
+    # Return the number of unique elements
     @abstractmethod
     def len(self):
         pass
 
+    # Pre-condition: the table is not empty, the value to search is not None
     @abstractmethod
     def seek(self, value):
         pass
 
+    # Pre-condition:  the table is not full, the value is not None
+    # Post-condition: a new value is inserted to a table, if collision is resolved successfully
+    # If value existed prior to the insertion, capacity is not consumed
     @abstractmethod
     def put(self, value):
         pass
 
+    # Pre-condition: the table is not empty, the value is not None
+    # Post-condition: the value is removed from the table if it was unique
     @abstractmethod
     def remove(self, value):
         pass
@@ -108,6 +116,9 @@ class HashTable(AbstractHashTable):
         return False if (index is None or self.__data[index] is None) else True
 
     def put(self, value):
+        if self.__size == self.__capacity:
+            self.__put_status = PutStatus.Full
+            return
         if value is None:
             self.__put_status = PutStatus.IsNone
             return
@@ -116,9 +127,9 @@ class HashTable(AbstractHashTable):
             self.__put_status = PutStatus.Fail
             return
         self.__put_status = PutStatus.Ok
-        self.__size += 1
         stored = self.__data[index]
         if stored is None:
+            self.__size += 1
             self.__data[index] = (value, 1)
             return
         self.__data[index] = (stored[self.VALUE_INDEX], stored[self.COUNT_INDEX] + 1)
@@ -132,9 +143,9 @@ class HashTable(AbstractHashTable):
             self.__remove_status = RemoveStatus.NotFound
             return
         self.__remove_status = RemoveStatus.Ok
-        self.__size -= 1
         stored = self.__data[index]
         if stored[self.COUNT_INDEX] == 1:
+            self.__size -= 1
             self.__data[index] = None
             return
         self.__data[index] = (stored[self.VALUE_INDEX], stored[self.COUNT_INDEX] - 1)
