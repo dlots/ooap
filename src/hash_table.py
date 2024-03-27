@@ -13,15 +13,15 @@ class PutStatus(Enum):
     Nil = 0
     Ok = 1
     IsNone = 2,
-    Full = 3,
     Fail = 4
 
 
 class RemoveStatus(Enum):
     Nil = 0
-    Ok = 1
-    Empty = 2,
-    NotFound = 3
+    Ok = 1,
+    IsNone = 2,
+    Empty = 3,
+    NotFound = 4
 
 
 # Definition of the abstract data type
@@ -42,7 +42,7 @@ class AbstractHashTable(ABC):
     def seek(self, value):
         pass
 
-    # Pre-condition:  the table is not full, the value is not None
+    # Pre-condition:  table has a slot for value, the value is not None
     # Post-condition: a new value is inserted to a table, if collision is resolved successfully
     # If value existed prior to the insertion, capacity is not consumed
     @abstractmethod
@@ -74,7 +74,7 @@ class HashTable(AbstractHashTable):
     LOAD_FACTOR_THRESHOLD = 0.75
     VALUE_INDEX = 0
     COUNT_INDEX = 1
-    STEP = 1
+    STEP = 3
 
     def __init__(self, capacity=DEFAULT_CAPACITY):
         self.__data = [None] * capacity
@@ -116,9 +116,6 @@ class HashTable(AbstractHashTable):
         return False if (index is None or self.__data[index] is None) else True
 
     def put(self, value):
-        if self.__size == self.__capacity:
-            self.__put_status = PutStatus.Full
-            return
         if value is None:
             self.__put_status = PutStatus.IsNone
             return
@@ -137,6 +134,9 @@ class HashTable(AbstractHashTable):
     def remove(self, value):
         if self.__size == 0:
             self.__remove_status = RemoveStatus.Empty
+            return
+        if value is None:
+            self.__remove_status = RemoveStatus.IsNone
             return
         index = self.__seek_index(value)
         if index is None or self.__data[index] is None:
