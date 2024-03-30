@@ -5,23 +5,22 @@ from enum import Enum
 class SeekStatus(Enum):
     Nil = 0
     Ok = 1
-    Empty = 2,
-    IsNone = 3
+    IsNone = 2
 
 
 class PutStatus(Enum):
     Nil = 0
     Ok = 1
     IsNone = 2,
-    Fail = 4
+    Fail = 3,
+    Exists = 4  # May be used in inherited classes
 
 
 class RemoveStatus(Enum):
     Nil = 0
     Ok = 1,
     IsNone = 2,
-    Empty = 3,
-    NotFound = 4
+    NotFound = 3
 
 
 # Definition of the abstract data type
@@ -34,10 +33,10 @@ class AbstractHashTable(ABC):
 
     # Return the number of unique elements
     @abstractmethod
-    def len(self):
+    def size(self):
         pass
 
-    # Pre-condition: the table is not empty, the value to search is not None
+    # Pre-condition: the value to search is not None
     @abstractmethod
     def seek(self, value):
         pass
@@ -49,7 +48,7 @@ class AbstractHashTable(ABC):
     def put(self, value):
         pass
 
-    # Pre-condition: the table is not empty, the value is not None
+    # Pre-condition: value exists in the table, the value is not None
     # Post-condition: the value is removed from the table if it was unique
     @abstractmethod
     def remove(self, value):
@@ -74,87 +73,83 @@ class HashTable(AbstractHashTable):
     LOAD_FACTOR_THRESHOLD = 0.75
     VALUE_INDEX = 0
     COUNT_INDEX = 1
-    STEP = 3
 
     def __init__(self, capacity=DEFAULT_CAPACITY):
-        self.__data = [None] * capacity
-        self.__capacity = capacity
-        self.__size = 3
+        self.data = [None] * capacity
+        self.capacity = capacity
+        self.__size = 0
         self.__seek_status = SeekStatus.Nil
-        self.__put_status = PutStatus.Nil
+        self._put_status = PutStatus.Nil
         self.__remove_status = RemoveStatus.Nil
 
-    def len(self):
+    def size(self):
         return self.__size
 
     def __hash_fun(self, value):
-        return sum([ord(ch) for ch in value]) % self.__capacity
+        return sum([ord(ch) for ch in value]) % self.capacity
 
-    def __seek_index(self, value):
-        value_hash = self.__hash_fun(value)
-        index = value_hash % self.__capacity
-        initial_index = index
-        stored = self.__data[index]
-        while stored is not None and self.__hash_fun(stored[self.VALUE_INDEX]) == value_hash:
-            if stored[self.VALUE_INDEX] == value:
-                return index
-            index = (index + self.STEP) % self.__capacity
-            if index == initial_index:
-                return None
-            stored = self.__data[index]
-        return index if stored is None else None
+    def __get_index(self, value):
+        return self.__hash_fun(value) % self.capacity
 
     def seek(self, value):
-        if self.__size == 0:
-            self.__seek_status = SeekStatus.Empty
-            return False
         if value is None:
             self.__seek_status = SeekStatus.IsNone
             return False
         self.__seek_status = SeekStatus.Ok
-        index = self.__seek_index(value)
-        return False if (index is None or self.__data[index] is None) else True
+        if self.__size == 0:
+            return False
+        index = self.__get_index(value)
+        bucket = self.data[index]
+        return bucket is not None and any(entry[0] == value for entry in bucket)
 
     def put(self, value):
         if value is None:
-            self.__put_status = PutStatus.IsNone
+            self._put_status = PutStatus.IsNone
             return
-        index = self.__seek_index(value)
-        if index is None:
-            self.__put_status = PutStatus.Fail
+        self._put_status = PutStatus.Ok
+        self.__size += 1
+        index = self.__get_index(value)
+        bucket = self.data[index]
+        if bucket is None:
+            self.data[index] = [(value, 1)]
             return
-        self.__put_status = PutStatus.Ok
-        stored = self.__data[index]
-        if stored is None:
-            self.__size += 1
-            self.__data[index] = (value, 1)
-            return
-        self.__data[index] = (stored[self.VALUE_INDEX], stored[self.COUNT_INDEX] + 1)
+        for i, (stored_value, count) in enumerate(bucket):
+            if stored_value == value:
+                bucket[i] = (value, count + 1)
+                return
+        bucket.append((value, 1))
 
     def remove(self, value):
-        if self.__size == 0:
-            self.__remove_status = RemoveStatus.Empty
-            return
         if value is None:
             self.__remove_status = RemoveStatus.IsNone
             return
-        index = self.__seek_index(value)
-        if index is None or self.__data[index] is None:
+        if self.__size == 0:
             self.__remove_status = RemoveStatus.NotFound
             return
-        self.__remove_status = RemoveStatus.Ok
-        stored = self.__data[index]
-        if stored[self.COUNT_INDEX] == 1:
-            self.__size -= 1
-            self.__data[index] = None
+        index = self.__get_index(value)
+        bucket = self.data[index]
+        if bucket is None:
+            self.__remove_status = RemoveStatus.NotFound
             return
-        self.__data[index] = (stored[self.VALUE_INDEX], stored[self.COUNT_INDEX] - 1)
+        for i, (stored_value, count) in enumerate(bucket):
+            if stored_value != value:
+                continue
+            self.__size -= 1
+            self.__remove_status = RemoveStatus.Ok
+            if count > 1:
+                bucket[i] = (value, count - 1)
+                return
+            bucket.pop(i)
+            if len(bucket) == 0:
+                self.data[index] = None
+            return
+        self.__remove_status = RemoveStatus.NotFound
 
     def get_seek_status(self):
         return self.__seek_status
 
     def get_put_status(self):
-        return self.__put_status
+        return self._put_status
 
     def get_remove_status(self):
         return self.__remove_status
