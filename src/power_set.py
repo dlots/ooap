@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 import hash_table as ht
 
 
-class AbstractPowerSet(ABC):
+class AbstractPowerSet(ht.AbstractHashTable):
     @abstractmethod
     # Post-condition: a new set is created
     def __init__(self, capacity):
@@ -16,23 +16,7 @@ class AbstractPowerSet(ABC):
     def put(self, value):
         pass
 
-    # Pre-condition: the value exists in the set, the value is not None
-    # Post-condition: the value is removed from the set
-    @abstractmethod
-    def remove(self, value):
-        pass
-
     """ Queries """
-
-    # Return the number of elements
-    @abstractmethod
-    def size(self):
-        pass
-
-    # Pre-condition: the value to search is not None
-    @abstractmethod
-    def seek(self, value):
-        pass
 
     @abstractmethod
     def intersection(self, other):
@@ -48,20 +32,6 @@ class AbstractPowerSet(ABC):
 
     @abstractmethod
     def is_subset(self, other):
-        pass
-
-    """ Status queries """
-
-    @abstractmethod
-    def get_seek_status(self):
-        pass
-
-    @abstractmethod
-    def get_put_status(self):
-        pass
-
-    @abstractmethod
-    def get_remove_status(self):
         pass
 
 
