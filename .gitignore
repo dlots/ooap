@@ -1,0 +1,6 @@
+/target
+/src/main.rs
+/.idea
+/backup
+/src/__pycache__/
+/test/__pycache__/
