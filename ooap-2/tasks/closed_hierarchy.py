@@ -30,6 +30,7 @@ class Human(Animal):
 
 
 class Machine(Any):
+    @abstractmethod
     def press_button(self):
         pass
 
