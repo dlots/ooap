@@ -64,6 +64,12 @@ class General(ABC):
     def is_same_type(self, other):
         return self.is_instance_of(type(other))
 
+    @abstractmethod
+    def assignment_attempt(self, source):
+        if not isinstance(source, self.get_real_type()):
+            return Void()
+        return source
+
 
 # Класс Any не определяет новых методов, служит базовым классом для остальной иерархии
 class Any(General):
@@ -93,6 +99,9 @@ class Any(General):
 
     def is_same_type(self, other):
         return super().is_same_type(other)
+
+    def assignment_attempt(self, source):
+        return super().assignment_attempt(source)
 
 
 class Animal(Any):
@@ -136,32 +145,24 @@ class Void(Dog, Cat, Human, Bomb):
         return cls._instance
 
 
-def make_animal_speak(animal: Animal):
-    if not isinstance(animal, Any):
-        print('Please use our type system! What is', type(animal), '?')
-        return
-    if not isinstance(animal, Animal):
-        print(animal.print(), "is not an animal!")
-        return
-    if animal == Void():
-        print('Animal does not exist!')
-        return
-    animal.speak()
-
-
 if __name__ == '__main__':
+    human = Human()
     me = Human()
-    my_pet = Cat()
-    friends_pet = Dog()
-    neighbors_pet = Void()
-    animal_shaped_bomb = Bomb()
-    local_animals = [me, my_pet, friends_pet, neighbors_pet, animal_shaped_bomb, None]
-    for animal in local_animals:
-        make_animal_speak(animal)
-    # OUTPUT:
-    #   Hi!
-    #   Meow!
-    #   Woof!
-    #   Animal does not exist!
-    #   Bomb{} is not an animal!
-    #   Please use our type system! What is <class 'NoneType'> ?
+    cat = Cat()
+    any_ = Any()
+
+    print(human)  # <__main__.Human object at 0x000001DFC20B6AA0>
+    human = human.assignment_attempt(me)  # assigning Human to Human
+    print(human)  # <__main__.Human object at 0x000001DFC20B6920>
+
+    print(human)  # <__main__.Human object at 0x000001DFC20B6920>
+    human = human.assignment_attempt(cat)  # assigning Cat to Human
+    print(human)  # <__main__.Void object at 0x000001DFC20B6710>
+
+    print(me)  # <__main__.Human object at 0x000001DFC20B6920>
+    me = me.assignment_attempt(any_)  # assigning Any to Human
+    print(me)  # <__main__.Void object at 0x000001DFC20B6710>
+
+    print(any_)  # <__main__.Any object at 0x000001DFC20B6740>
+    any_ = any_.assignment_attempt(cat)  # assigning Cat to Any
+    print(any_)  # <__main__.Cat object at 0x000001DFC20B68F0>
