@@ -110,11 +110,6 @@ class Animal(Any):
         pass
 
 
-class Dog(Animal):
-    def speak(self):
-        print('Woof!')
-
-
 class Cat(Animal):
     def speak(self):
         print('Meow!')
@@ -125,18 +120,7 @@ class Human(Animal):
         print('Hi!')
 
 
-class Machine(Any):
-    @abstractmethod
-    def press_button(self):
-        pass
-
-
-class Bomb(Machine):
-    def press_button(self):
-        print('BOOM')
-
-
-class Void(Dog, Cat, Human, Bomb):
+class Void(Cat, Human):
     _instance = None
 
     def __new__(cls):
