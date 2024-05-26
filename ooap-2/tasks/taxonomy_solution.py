@@ -42,7 +42,7 @@ class FilteredViewer(Viewer):
         pass
 
     def get_subscribed_content(self):
-        return self.__filter_shocking(super().get_subscribed_content())
+        return self.__filter(super().get_subscribed_content())
 
 
 class MatureForbiddenViewer(FilteredViewer):
