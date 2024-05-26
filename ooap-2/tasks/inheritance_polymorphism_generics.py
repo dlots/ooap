@@ -172,12 +172,12 @@ if __name__ == '__main__':
     b = Vector([MyInteger(2)])
     c = Vector([a, b])
     d = Vector([a, a])
-    print(c)
-    print(d)
-    print(c + d)
+    print(c)            # [Vector{1, 3}, Vector{2}]
+    print(d)            # [Vector{1, 3}, Vector{1, 3}]
+    print(c + d)        # [Vector{2, 6}, Void]
     e = Vector([c, d])
     f = Vector([d, c])
-    print(e)
-    print(f)
-    print(e + e)
-    print(e + f)
+    print(e)            # [Vector{Vector{1, 3}, Vector{2}}, Vector{Vector{1, 3}, Vector{1, 3}}]
+    print(f)            # [Vector{Vector{1, 3}, Vector{1, 3}}, Vector{Vector{1, 3}, Vector{2}}]
+    print(e + e)        # [Vector{Vector{2, 6}, Vector{4}}, Vector{Vector{2, 6}, Vector{2, 6}}]
+    print(e + f)        # [Vector{Vector{2, 6}, Void}, Vector{Vector{2, 6}, Void}]
